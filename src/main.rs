@@ -59,16 +59,16 @@ struct Store {
 
 impl Store {
     fn new() -> Self {
-        let path = "data.json";
+        let path = "data/data.json";
         if let Ok(is_exists) = fs::exists(path) {
             if is_exists {
                 let data = fs::read_to_string(path).expect("Unable to read file");
                 let tasks: Vec<Task> = serde_json::from_str(&data).expect("Unable to parse JSON");
                 let max_task_id = tasks.iter().map(|i| i.id).max().unwrap_or(0);
-                Store { tasks, max_task_id, path: "data.json".to_string() }
+                Store { tasks, max_task_id, path: path.to_string() }
             } else {
                 let empty_tasks: Vec<Task> = vec![];
-                let s = Store {tasks: empty_tasks, max_task_id: 0, path: "data.json".to_string()};
+                let s = Store {tasks: empty_tasks, max_task_id: 0, path: path.to_string()};
                 s.persist();
                 s
             }
