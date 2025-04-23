@@ -4,7 +4,7 @@ use std::env;
 fn main() {
     let args: Vec<String> = env::args().collect();
     let command = parse_args(&args);
-    let mut store = Store::new();
+    let mut store = Store::new(None);
     match command {
         Command::Add(description) => {
             let new_id = store.add_task(description);

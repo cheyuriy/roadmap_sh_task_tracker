@@ -11,8 +11,12 @@ pub struct Store {
 }
 
 impl Store {
-    pub fn new() -> Self {
-        let path = "data/data.json";
+    pub fn new(file_path: Option<&str>) -> Self {
+        let path = if let Some(p) = file_path  {
+            p 
+        } else {
+            "data/data.json"            
+        };
         if let Ok(is_exists) = fs::exists(path) {
             if is_exists {
                 let data = fs::read_to_string(path).expect("Unable to read file");
@@ -78,5 +82,110 @@ impl Store {
         } else {
             self.tasks.iter().collect()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn create_store() {
+        let temp_file = "tmp1.json";
+        let store = Store::new(Some(temp_file));
+        assert_eq!(store.tasks.len(), 0);
+        assert_eq!(store.max_task_id, 0);
+        fs::remove_file(temp_file).expect("Unable to remove file");
+    }
+
+    #[test]
+    fn add_task() {
+        let temp_file = "tmp2.json";
+        let mut store = Store::new(Some(temp_file));
+        let id = store.add_task("some description".to_string());
+        assert_eq!(store.tasks.len(), 1);
+        assert_eq!(store.max_task_id, id);
+        assert_eq!(store.tasks[0].description(), "some description");
+        fs::remove_file(temp_file).expect("Unable to remove file");
+    }
+
+    #[test]
+    fn update_task() {
+        let temp_file = "tmp3.json";
+        let mut store = Store::new(Some(temp_file));
+        let id = store.add_task("some description".to_string());
+        store.update_task(id, "new description".to_string());
+        assert_eq!(store.tasks[0].description(), "new description");
+        fs::remove_file(temp_file).expect("Unable to remove file");
+    }
+
+    #[test]
+    fn delete_task() {
+        let temp_file = "tmp4.json";
+        let mut store = Store::new(Some(temp_file));
+        let id = store.add_task("some description".to_string());
+        store.delete_task(id);
+        assert_eq!(store.tasks.len(), 0);
+        fs::remove_file(temp_file).expect("Unable to remove file");
+    }
+
+    #[test]
+    fn mark_task() {
+        let temp_file = "tmp5.json";
+        let mut store = Store::new(Some(temp_file));
+        let id = store.add_task("some description".to_string());
+        store.mark_task(id, Status::Done);
+        assert_eq!(store.tasks[0].status(), &Status::Done);
+        fs::remove_file(temp_file).expect("Unable to remove file");
+    }
+
+    #[test]
+    fn list_tasks() {
+        let temp_file = "tmp6.json";
+        let mut store = Store::new(Some(temp_file));
+        store.add_task("some description".to_string());
+        store.add_task("another description".to_string());
+        let tasks = store.list_tasks(None);
+        assert_eq!(tasks.len(), 2);
+        assert_eq!(tasks[0].description(), "some description");
+        assert_eq!(tasks[1].description(), "another description");
+        fs::remove_file(temp_file).expect("Unable to remove file");
+    }
+
+    #[test]
+    fn list_tasks_with_status() {
+        let temp_file = "tmp7.json";
+        let mut store = Store::new(Some(temp_file));
+        let id1 = store.add_task("some description".to_string());
+        let _ = store.add_task("another description".to_string());
+        store.mark_task(id1, Status::Done);
+        let tasks = store.list_tasks(Some(Status::Done));
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].id(), id1);
+        fs::remove_file(temp_file).expect("Unable to remove file");
+    }
+
+    #[test]
+    fn persist_store() {
+        let temp_file = "tmp8.json";
+        let mut store = Store::new(Some(temp_file));
+        store.add_task("some description".to_string());
+        store.persist();
+        let data = fs::read_to_string(&store.path).expect("Unable to read file");
+        let tasks: Vec<Task> = serde_json::from_str(&data).expect("Unable to parse JSON");
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].description(), "some description");
+        fs::remove_file(temp_file).expect("Unable to remove file");
+    }
+
+    #[test]
+    fn persist_store_with_empty_tasks() {
+        let temp_file = "tmp9.json";
+        let store = Store::new(Some(temp_file));
+        let data = fs::read_to_string(&store.path).expect("Unable to read file");
+        let tasks: Vec<Task> = serde_json::from_str(&data).expect("Unable to parse JSON");
+        assert_eq!(tasks.len(), 0);
+        fs::remove_file(temp_file).expect("Unable to remove file");
     }
 }
