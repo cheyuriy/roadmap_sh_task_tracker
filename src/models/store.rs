@@ -2,6 +2,7 @@ use super::task::{Task, TaskId};
 use super::status::Status;
 use std::fs;
 use std::io::Write;
+use std::path::Path;
 
 #[derive(Debug)]
 pub struct Store {
@@ -36,6 +37,11 @@ impl Store {
 
     pub fn persist(&self) {
         let json = serde_json::to_string_pretty(&self.tasks).expect("Unable to write JSON");
+
+        let path = Path::new(&self.path);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).expect("Unable to create directory");
+        }
         let mut file = fs::File::create(&self.path).expect("Unable to create file");
         file.write_all(json.as_bytes()).expect("Unable to write file");
     }
