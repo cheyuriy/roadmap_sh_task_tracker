@@ -2,7 +2,7 @@
 
 This is a simple command-line interface (CLI) application for managing tasks. It allows you to add, update, delete, and list tasks, as well as mark them as "in progress" or "done." Tasks are stored in a JSON file for persistence.
 
-This project is part of the [roadmap.sh backend projects](https://roadmap.sh/backend/projects).
+This project is part of the [roadmap.sh backend projects](https://roadmap.sh/projects/task-tracker).
 
 ## Features
 
